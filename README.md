@@ -1,4 +1,4 @@
-# 🏠 House Price Prediction (MLOps Project)
+# 🏠 House Price Prediction
 
 ## 📌 Description
 Ce projet est un pipeline MLOps de prédiction des prix immobiliers basé sur du Machine Learning.
