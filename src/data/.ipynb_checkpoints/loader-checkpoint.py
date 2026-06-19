@@ -7,4 +7,6 @@ def load_train_data():
     return pd.read_csv(BASE_DIR / "data" / "train.csv")
 
 def load_test_data():
-    return pd.read_csv(BASE_DIR / "data" / "test.csv")
+    return pd.read_csv(BASE_DIR / "data" / "test.csv") 
+
+print("Loader exécuter avec succés")
