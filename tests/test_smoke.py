@@ -7,7 +7,7 @@ from src.features.builder import create_all_features
 # 1. TEST LOADER
 # =========================
 def test_loader():
-    df = load_train_data("data/train.csv")
+    df = load_train_data()
 
     assert df is not None, "Le DataFrame est None"
     assert len(df) > 0, "Le dataset est vide"
@@ -18,7 +18,7 @@ def test_loader():
 # 2. TEST FEATURE ENGINEERING
 # =========================
 def test_feature_engineering():
-    df = load_train_data("data/train.csv")
+    df = load_train_data()
     df_feat = create_all_features(df)
 
     # Vérifie que les nouvelles features existent
