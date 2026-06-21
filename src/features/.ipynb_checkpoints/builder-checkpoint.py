@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 import joblib
 import logging
 
-# 👉 IMPORT DU LOADER (IMPORTANT)
+#IMPORT DU LOADER 
 from src.data.loader import load_train_data
 
 logging.basicConfig(level=logging.INFO)
@@ -158,3 +158,25 @@ class Preprocessor:
 # =============================================================================
 def get_preprocessor():
     return Preprocessor()
+
+def main():
+    import argparse
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--fit", action="store_true")
+    args = parser.parse_args()
+
+    df = load_train_data()
+
+    preprocessor = Preprocessor()
+    preprocessor.fit(df)
+
+    # ✅ créer dossier models si absent
+    Path("models").mkdir(parents=True, exist_ok=True)
+
+    preprocessor.save("models/preprocessor.pkl")
+
+    logger.info("Preprocessor sauvegardé avec succès")
+if __name__ == "__main__":
+  main()
