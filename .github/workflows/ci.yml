@@ -24,6 +24,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # 🔥 FIX IMPORTANT ICI
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+
       - name: Test loader
         run: |
           python -c "from loader import load_train_data; df = load_train_data(); print(df.shape)"
@@ -32,6 +36,6 @@ jobs:
         run: |
           python -c "from building import Preprocessor; print('building OK')"
 
-      - name: Test train import 
+      - name: Test train import
         run: |
           python -c "import train; print('train OK')"
