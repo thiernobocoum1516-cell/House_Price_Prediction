@@ -15,8 +15,8 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from catboost import CatBoostRegressor
 
 # IMPORTS PROPRES
-from loader import load_train_data
-from building import Preprocessor
+from src.data.loader import load_train_data
+from src.features.building import Preprocessor
 
 
 logging.basicConfig(level=logging.INFO)

@@ -8,7 +8,7 @@ import joblib
 import logging
 
 # 👉 IMPORT DU LOADER (IMPORTANT)
-from loader import load_train_data
+from src.data.loader import load_train_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

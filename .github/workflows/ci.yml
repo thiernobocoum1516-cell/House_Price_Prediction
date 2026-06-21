@@ -24,18 +24,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 🔥 FIX IMPORTANT ICI
+      # 🔥 IMPORTANT : on pointe vers src
       - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
 
+      # -------------------------
+      # TEST LOADER
+      # -------------------------
       - name: Test loader
         run: |
-          python -c "from loader import load_train_data; df = load_train_data(); print(df.shape)"
+          python -c "from src.data.loader import load_train_data; df = load_train_data(); print(df.shape)"
 
+      # -------------------------
+      # TEST BUILDING (FEATURE ENGINEERING)
+      # -------------------------
       - name: Test building
         run: |
-          python -c "from building import Preprocessor; print('building OK')"
+          python -c "from src.features.building import Preprocessor; print('building OK')"
 
+      # -------------------------
+      # TEST TRAIN MODULE
+      # -------------------------
       - name: Test train import
         run: |
-          python -c "import train; print('train OK')"
+          python -c "import src.models.train; print('train OK')"
