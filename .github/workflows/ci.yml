@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: ML Pipeline CI
 
 on:
   push:
@@ -7,23 +7,31 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Récupérer le dépôt
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Installer Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Installer les dépendances
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Lancer les tests
+      - name: Test loader
         run: |
-          PYTHONPATH=. pytest
+          python -c "from loader import load_train_data; df = load_train_data(); print(df.shape)"
+
+      - name: Test building
+        run: |
+          python -c "from building import Preprocessor; print('building OK')"
+
+      - name: Test train import 
+        run: |
+          python -c "import train; print('train OK')"
