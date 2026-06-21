@@ -16,7 +16,7 @@ from catboost import CatBoostRegressor
 
 # IMPORTS PROPRES
 from src.data.loader import load_train_data
-from src.features.building import Preprocessor
+from src.features.builder import Preprocessor
 
 
 logging.basicConfig(level=logging.INFO)
