@@ -70,8 +70,8 @@ jobs:
       # =========================
 
       - name: Test predictor
-        run: |
-          python - << 'EOF'
+  run: |
+    python - << 'EOF'
 from api.predictor import predict_house_price
 
 sample = {
@@ -99,9 +99,8 @@ sample = {
 
 pred = predict_house_price(sample)
 assert isinstance(pred, float)
-print("predictor OK")
+print("OK predictor")
 EOF
-
 
       # =========================
       # TEST API (FIXED)
