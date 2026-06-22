@@ -3,6 +3,7 @@ name: ML Pipeline CI
 on:
   push:
     branches: [main]
+
   pull_request:
     branches: [main]
 
@@ -11,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -25,7 +26,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
 
       # -------------------------
       # TEST LOADER
@@ -35,11 +36,18 @@ jobs:
           python -c "from src.data.loader import load_train_data; df = load_train_data(); print(df.shape)"
 
       # -------------------------
+      # TEST FEATURE ENGINEERING
+      # -------------------------
+      - name: Test builder
+        run: |
+          python -c "from src.features.builder import create_all_features; print('builder OK')"
+
+      # -------------------------
       # BUILD DATASET
       # -------------------------
       - name: Build dataset
         run: |
-          python script/build_dataset.py
+          python scripts/build_dataset.py
 
       # -------------------------
       # TEST TRAIN MODULE
@@ -47,3 +55,10 @@ jobs:
       - name: Test train import
         run: |
           python -c "import src.models.train; print('train import OK')"
+
+      # -------------------------
+      # RUN PYTEST
+      # -------------------------
+      - name: Run tests
+        run: |
+          pytest -v
