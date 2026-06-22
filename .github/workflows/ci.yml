@@ -24,7 +24,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 🔥 IMPORTANT : on pointe vers src
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
 
@@ -36,15 +35,30 @@ jobs:
           python -c "from src.data.loader import load_train_data; df = load_train_data(); print(df.shape)"
 
       # -------------------------
-      # TEST BUILDING (FEATURE ENGINEERING)
+      # BUILD DATASET (IMPORTANT)
       # -------------------------
-      - name: Test building
+      - name: Build dataset
         run: |
-          python -c "from src.features.builder import create_all_features; print('builder OK')"
+          python -c "
+          from src.data.loader import load_train_data
+          from src.features.builder import create_all_features
+          import pandas as pd
+
+          df = load_train_data()
+          df_feat = create_all_features(df)
+
+          import os
+          os.makedirs('data/processed', exist_ok=True)
+
+          df_feat.to_csv('data/processed/train_ci.csv', index=False)
+
+          print('dataset built OK')
+          print(df_feat.shape)
+          "
 
       # -------------------------
-      # TEST TRAIN MODULE
+      # TEST TRAIN MODULE (SMOKE TEST)
       # -------------------------
       - name: Test train import
         run: |
-          python -c "import src.models.train; print('train OK')"
+          python -c "import src.models.train; print('train import OK')"
