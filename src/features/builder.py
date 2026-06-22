@@ -1,182 +1,219 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pandas as pd
+import os
 import numpy as np
+import pandas as pd
+
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-import joblib
-import logging
+from sklearn.linear_model import LassoCV
 
-#IMPORT DU LOADER 
-from src.data.loader import load_train_data
+# ============================================================
+# IMPORT LOADER (source de vérité data)
+# ============================================================
+from src.data.loader import load_train_data, load_test_data
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# ============================================================
+# CONSTANTES EDA
+# ============================================================
+COLS_NONE = [
+    "PoolQC", "MiscFeature", "Fence", "FireplaceQu", "Alley",
+    "GarageType", "GarageFinish", "GarageQual", "GarageCond",
+    "BsmtQual", "BsmtCond", "BsmtExposure",
+    "BsmtFinType1", "BsmtFinType2",
+    "MasVnrType"
+]
 
-
-# =============================================================================
+# ============================================================
 # FEATURE ENGINEERING
-# =============================================================================
-def create_features(df: pd.DataFrame) -> pd.DataFrame:
-    df_feat = df.copy()
+# ============================================================
+def create_all_features(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
 
-    df_feat['QualityArea'] = df_feat['OverallQual'] * df_feat['GrLivArea']
-    df_feat['TotalSF'] = df_feat['TotalBsmtSF'] + df_feat['1stFlrSF'] + df_feat['2ndFlrSF']
-    df_feat['HouseAge'] = df_feat['YrSold'] - df_feat['YearBuilt']
-    df_feat['RemodAge'] = df_feat['YrSold'] - df_feat['YearRemodAdd']
-    df_feat['TotalBath'] = (
-        df_feat['FullBath'] + 0.5 * df_feat['HalfBath'] +
-        df_feat['BsmtFullBath'] + 0.5 * df_feat['BsmtHalfBath']
+    df["QualityArea"] = df["OverallQual"] * df["GrLivArea"]
+    df["TotalSF"] = df["TotalBsmtSF"] + df["1stFlrSF"] + df["2ndFlrSF"]
+    df["HouseAge"] = df["YrSold"] - df["YearBuilt"]
+    df["RemodAge"] = df["YrSold"] - df["YearRemodAdd"]
+    df["TotalBath"] = (
+        df["FullBath"] + 0.5 * df["HalfBath"] +
+        df["BsmtFullBath"] + 0.5 * df["BsmtHalfBath"]
     )
-    df_feat['TotalPorchSF'] = (
-        df_feat['OpenPorchSF'] + df_feat['EnclosedPorch'] +
-        df_feat['3SsnPorch'] + df_feat['ScreenPorch']
+    df["TotalPorchSF"] = (
+        df["OpenPorchSF"] + df["EnclosedPorch"] +
+        df["3SsnPorch"] + df["ScreenPorch"]
     )
 
-    return df_feat
+    return df
 
 
-# =============================================================================
-# PREPROCESSOR
-# =============================================================================
-class Preprocessor:
+# ============================================================
+# CLEANING INITIAL (aligné loader)
+# ============================================================
+def initial_cleaning(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+
+    # sécurité Id (si présent)
+    if "Id" in df.columns:
+        df.drop(columns=["Id"], inplace=True)
+
+    # NaN → "None"
+    df[COLS_NONE] = df[COLS_NONE].fillna("None")
+
+    return df
+
+
+# ============================================================
+# FEATURE ENGINEER CLASS
+# ============================================================
+class FeatureEngineer:
 
     def __init__(self):
         self.scaler = StandardScaler()
         self.label_encoders = {}
-        self.imputation_params = {}
         self.selected_features = None
         self.num_cols = None
         self.cat_cols = None
-        self.fitted = False
+        self.feature_names = None
 
-    # =========================================================
-    # FIT
-    # =========================================================
-    def fit(self, df: pd.DataFrame, selected_features_path: str = None):
+    # --------------------------------------------------------
+    # FIT + TRANSFORM (TRAIN)
+    # --------------------------------------------------------
+    def fit_transform(self, X, y):
 
-        logger.info("Fit preprocessing...")
+        # ===== features =====
+        X = create_all_features(X)
 
-        X = create_features(df)
+        # ===== cleaning =====
+        X = self._impute(X, fit=True)
 
-        self.num_cols = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
-        self.cat_cols = X.select_dtypes(include=['object']).columns.tolist()
+        # ===== encoding =====
+        X = self._encode(X, fit=True)
 
-        for col in ['Id', 'SalePrice']:
-            if col in self.num_cols:
-                self.num_cols.remove(col)
-            if col in self.cat_cols:
-                self.cat_cols.remove(col)
+        # ===== numeric scaling =====
+        self.num_cols = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+        self.num_cols = [c for c in self.num_cols if c != "SalePrice"]
 
-        self._impute(X)
-        self._encode(X)
+        X[self.num_cols] = self.scaler.fit_transform(X[self.num_cols])
 
-        self.scaler.fit(X[self.num_cols])
+        # ===== feature selection =====
+        self.feature_names = X.columns.tolist()
 
-        # features selection
-        if selected_features_path:
-            with open(selected_features_path, "r") as f:
-                self.selected_features = [line.strip() for line in f]
-        else:
-            self.selected_features = [c for c in X.columns if c not in ['Id', 'SalePrice']]
+        print("LassoCV training...")
+        lasso = LassoCV(cv=5, random_state=42, max_iter=10000)
+        lasso.fit(X.values, y)
 
-        self.fitted = True
-        logger.info("Fit terminé")
-        return self
+        self.selected_features = [
+            self.feature_names[i]
+            for i, coef in enumerate(lasso.coef_)
+            if coef != 0
+        ]
 
-    # =========================================================
-    # TRANSFORM
-    # =========================================================
-    def transform(self, df: pd.DataFrame):
+        print(f"{len(self.selected_features)} features sélectionnées")
 
-        if not self.fitted:
-            raise RuntimeError("Preprocessor not fitted")
+        return X
 
-        logger.info("Transform...")
+    # --------------------------------------------------------
+    # TRANSFORM (PREDICTION)
+    # --------------------------------------------------------
+    def transform(self, X):
 
-        X = create_features(df)
-
-        self._apply_imputation(X)
-        self._apply_encoding(X)
+        X = create_all_features(X)
+        X = self._impute(X, fit=False)
+        X = self._encode(X, fit=False)
 
         X[self.num_cols] = self.scaler.transform(X[self.num_cols])
 
-        X_final = X[self.selected_features].copy()
+        # sécurité alignment
+        missing = set(self.feature_names) - set(X.columns)
+        if missing:
+            raise ValueError(f"Colonnes manquantes: {missing}")
 
-        logger.info(f"Shape final: {X_final.shape}")
-        return X_final
+        X = X[self.feature_names]
 
-    # =========================================================
-    # IMPUTATION FIT
-    # =========================================================
-    def _impute(self, X):
-        self.imputation_params['median'] = X.median(numeric_only=True).to_dict()
-        X.fillna(self.imputation_params['median'], inplace=True)
+        return X
 
-    # =========================================================
-    # IMPUTATION TRANSFORM
-    # =========================================================
-    def _apply_imputation(self, X):
-        X.fillna(self.imputation_params['median'], inplace=True)
+    # --------------------------------------------------------
+    # IMPUTATION (version notebook)
+    # --------------------------------------------------------
+    def _impute(self, X, fit=False):
+        X = X.copy()
 
-    # =========================================================
-    # ENCODING FIT
-    # =========================================================
-    def _encode(self, X):
-        for col in self.cat_cols:
-            le = LabelEncoder()
+        # LotFrontage par Neighborhood
+        if "Neighborhood" in X.columns:
+            if fit:
+                self.neigh_medians = X.groupby("Neighborhood")["LotFrontage"].median()
+
+            X["LotFrontage"] = X.apply(
+                lambda r: self.neigh_medians.get(r["Neighborhood"], X["LotFrontage"].median())
+                if pd.isna(r["LotFrontage"]) else r["LotFrontage"],
+                axis=1
+            )
+
+        # MasVnrArea
+        if "MasVnrType" in X.columns:
+            X.loc[X["MasVnrType"].isna(), "MasVnrArea"] = 0
+
+        X["MasVnrArea"] = X["MasVnrArea"].fillna(X["MasVnrArea"].median())
+
+        # GarageYrBlt
+        if "GarageType" in X.columns:
+            X.loc[X["GarageType"].isna(), "GarageYrBlt"] = 0
+
+        X["GarageYrBlt"] = X["GarageYrBlt"].fillna(X["YearBuilt"])
+
+        # Electrical
+        mode = X["Electrical"].mode()[0]
+        X["Electrical"] = X["Electrical"].fillna(mode).astype(str)
+
+        # fallback
+        X = X.fillna(X.median(numeric_only=True))
+        X = X.fillna("None")
+
+        return X
+
+    # --------------------------------------------------------
+    # ENCODING
+    # --------------------------------------------------------
+    def _encode(self, X, fit=False):
+        X = X.copy()
+
+        cat_cols = X.select_dtypes(include=["object"]).columns.tolist()
+        self.cat_cols = cat_cols
+
+        for col in cat_cols:
             X[col] = X[col].astype(str)
-            le.fit(X[col])
-            self.label_encoders[col] = le
-            X[col] = le.transform(X[col])
 
-    # =========================================================
-    # ENCODING TRANSFORM
-    # =========================================================
-    def _apply_encoding(self, X):
-        for col in self.cat_cols:
-            le = self.label_encoders[col]
-            X[col] = X[col].astype(str)
-            known = set(le.classes_)
-            X[col] = X[col].apply(lambda x: x if x in known else le.classes_[0])
-            X[col] = le.transform(X[col])
+            if fit:
+                le = LabelEncoder()
+                X[col] = le.fit_transform(X[col])
+                self.label_encoders[col] = le
+            else:
+                le = self.label_encoders[col]
+                X[col] = X[col].apply(lambda x: x if x in le.classes_ else le.classes_[0])
+                X[col] = le.transform(X[col])
 
-    # =========================================================
-    # SAVE / LOAD
-    # =========================================================
-    def save(self, path):
-        joblib.dump(self, path)
-        logger.info(f"Saved -> {path}")
-
-    @staticmethod
-    def load(path):
-        return joblib.load(path)
+        return X
 
 
-# =============================================================================
-# FACTORY CLEAN (IMPORTANT POUR TRAIN.PY)
-# =============================================================================
-def get_preprocessor():
-    return Preprocessor()
+# ============================================================
+# PIPELINE ENTRY POINT
+# ============================================================
+def build(mode="train"):
 
-def main():
-    import argparse
-    from pathlib import Path
+    if mode == "train":
+        df = load_train_data()
+    else:
+        df = load_test_data()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--fit", action="store_true")
-    args = parser.parse_args()
+    df = initial_cleaning(df)
+    df = create_all_features(df)
 
-    df = load_train_data()
+    return df
 
-    preprocessor = Preprocessor()
-    preprocessor.fit(df)
 
-    # ✅ créer dossier models si absent
-    Path("models").mkdir(parents=True, exist_ok=True)
-
-    preprocessor.save("models/preprocessor.pkl")
-
-    logger.info("Preprocessor sauvegardé avec succès")
+# ============================================================
+# EXECUTION
+# ============================================================
 if __name__ == "__main__":
-  main()
+    df = build("train")
+    print(df.shape)
