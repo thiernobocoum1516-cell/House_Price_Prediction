@@ -8,17 +8,17 @@ from sklearn.metrics import r2_score, mean_squared_error
 
 
 # ============================================
-# CHEMINS
+# PATHS SAFE
 # ============================================
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_PATH = BASE_DIR / "data" / "processed"
 MODEL_DIR = BASE_DIR / "models"
-MODEL_DIR.mkdir(exist_ok=True)
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================
-# CHARGEMENT DES DONNÉES
+# LOAD DATA
 # ============================================
 
 def load_data():
@@ -26,39 +26,60 @@ def load_data():
     X_test = pd.read_csv(DATA_PATH / "X_test_full.csv")
     y_train = pd.read_csv(DATA_PATH / "y_train.csv").values.ravel()
     y_test = pd.read_csv(DATA_PATH / "y_test.csv").values.ravel()
-
     return X_train, X_test, y_train, y_test
 
 
 # ============================================
-# CHARGEMENT DES PARAMÈTRES
+# LOAD PARAMS SAFE
 # ============================================
 
 def load_params():
-    params_path = MODEL_DIR / "best_params.json"
+    path = MODEL_DIR / "best_params.json"
 
-    if params_path.exists():
-        with open(params_path, "r") as f:
+    if path.exists():
+        with open(path, "r") as f:
             params = json.load(f)
-        print(" Hyperparamètres chargés depuis best_params.json")
+        print("[INFO] params loaded")
     else:
-        print(" best_params.json introuvable → fallback")
         params = {
             "iterations": 300,
-            "learning_rate": 0.1,
-            "depth": 6
+            "learning_rate": 0.05,
+            "depth": 6,
+            "loss_function": "RMSE"
         }
+        print("[INFO] fallback params used")
 
     return params
 
 
 # ============================================
-# TRAINING
+# CLEAN DATA (CRITICAL FIX CATBOOST)
+# ============================================
+
+def clean_data(X: pd.DataFrame):
+    X = X.copy()
+
+    cat_cols = X.select_dtypes(include=["object", "category"]).columns
+    num_cols = X.select_dtypes(include=["number"]).columns
+
+    # categorical → string + no NaN
+    for col in cat_cols:
+        X[col] = X[col].fillna("None").astype(str)
+
+    # numeric → no NaN
+    for col in num_cols:
+        X[col] = X[col].fillna(0)
+
+    return X, list(cat_cols)
+
+
+# ============================================
+# TRAIN MODEL
 # ============================================
 
 def train_model(X_train, y_train, params):
 
-    allowed_keys = {
+    allowed = {
         "iterations",
         "depth",
         "learning_rate",
@@ -66,119 +87,91 @@ def train_model(X_train, y_train, params):
         "loss_function"
     }
 
-    clean_params = {k: v for k, v in params.items() if k in allowed_keys}
+    params = {k: v for k, v in params.items() if k in allowed}
 
-    X_train = X_train.copy()
+    X_train, cat_features = clean_data(X_train)
 
-    # =========================
-    # 1. détecter catégorielles
-    # =========================
-    cat_features = X_train.select_dtypes(include=["object"]).columns.tolist()
-
-    # =========================
-    # 2. CLEAN IMPORTANT (FIX ERROR NAN)
-    # =========================
-    for col in cat_features:
-        X_train[col] = X_train[col].fillna("None").astype(str)
-
-    # =========================
-    # 3. train model
-    # =========================
     model = CatBoostRegressor(
-        **clean_params,
+        **params,
         random_seed=42,
         verbose=False
     )
 
     model.fit(X_train, y_train, cat_features=cat_features)
 
-    return model
+    return model, cat_features, X_train
+
+
 # ============================================
-# EVALUATION
+# EVALUATE
 # ============================================
 
 def evaluate(model, X_test, y_test):
+
+    X_test, _ = clean_data(X_test)
 
     preds = model.predict(X_test)
 
     r2 = r2_score(y_test, preds)
     rmse = mean_squared_error(y_test, preds, squared=False)
 
-    print("\n PERFORMANCE")
-    print(f" R²   : {r2:.4f}")
-    print(f" RMSE : {rmse:.2f}")
+    print("\nPERF")
+    print(f"R2   : {r2:.4f}")
+    print(f"RMSE : {rmse:.2f}")
 
     return r2, rmse
 
 
 # ============================================
-# SAVE ARTIFACTS (MODEL + FEATURES + PARAMS)
+# SAVE ARTIFACTS (API SAFE)
 # ============================================
 
-def save_artifacts(model, X_train, params, r2, rmse):
+def save_artifacts(model, X_train, cat_features, params, r2, rmse):
 
-    # 1. modèle
+    print("\n[INFO] saving artifacts in:", MODEL_DIR)
+
     joblib.dump(model, MODEL_DIR / "best_model.pkl")
+    joblib.dump(X_train.columns.tolist(), MODEL_DIR / "features.pkl")
+    joblib.dump(cat_features, MODEL_DIR / "cat_features.pkl")
 
-    # 2. features (CRITIQUE POUR L'API)
-    feature_names = X_train.columns.tolist()
-    joblib.dump(feature_names, MODEL_DIR / "features.pkl")
-
-    # 3. paramètres utilisés
     with open(MODEL_DIR / "best_params.json", "w") as f:
         json.dump(params, f, indent=4)
 
-    # 4. metadata (optionnel mais propre)
     metadata = {
-        "model_type": "CatBoostRegressor",
-        "metrics": {
-            "r2": float(r2),
-            "rmse": float(rmse)
-        },
-        "n_features": len(feature_names)
+        "model": "CatBoostRegressor",
+        "r2": float(r2),
+        "rmse": float(rmse),
+        "n_features": len(X_train.columns)
     }
 
     with open(MODEL_DIR / "model_metadata.json", "w") as f:
         json.dump(metadata, f, indent=4)
 
-    print("\n Artifacts sauvegardés :")
-    print(" - best_model.pkl")
-    print(" - features.pkl")
-    print(" - best_params.json")
-    print(" - model_metadata.json")
+    print("[OK] artifacts saved")
 
 
 # ============================================
-# PIPELINE PRINCIPAL
+# MAIN PIPELINE
 # ============================================
 
 def main():
 
-    print("\n" + "="*60)
-    print(" TRAINING PIPELINE - CATBOOST CLEAN MLOPS")
-    print("="*60)
+    print("\n==============================")
+    print(" TRAINING PIPELINE CLEAN")
+    print("==============================")
 
-    # 1. data
     X_train, X_test, y_train, y_test = load_data()
 
-    # 2. params
     params = load_params()
 
-    # 3. train
-    model = train_model(X_train, y_train, params)
+    model, cat_features, X_train_clean = train_model(X_train, y_train, params)
 
-    # 4. eval
     r2, rmse = evaluate(model, X_test, y_test)
 
-    # 5. save everything
-    save_artifacts(model, X_train, params, r2, rmse)
+    save_artifacts(model, X_train_clean, cat_features, params, r2, rmse)
 
-    print("\n Pipeline terminé avec succès")
+    print("\nPIPELINE DONE")
 
-
-# ============================================
-# EXECUTION
-# ============================================
 
 if __name__ == "__main__":
     main()
