@@ -6,16 +6,11 @@ on:
   pull_request:
     branches: [main]
 
-
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-
-      # ============================================
-      # SETUP
-      # ============================================
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,9 +29,9 @@ jobs:
         run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
 
 
-      # ============================================
+      # =========================
       # DATA PIPELINE TEST
-      # ============================================
+      # =========================
 
       - name: Test loader
         run: |
@@ -48,9 +43,9 @@ jobs:
           python -c "from src.features.builder import create_all_features; import pandas as pd; df = pd.DataFrame({'GrLivArea':[1500],'LotArea':[8000]}); assert df is not None"
 
 
-      # ============================================
-      # BUILD DATASET + TRAINING
-      # ============================================
+      # =========================
+      # BUILD + TRAIN
+      # =========================
 
       - name: Build dataset
         run: |
@@ -61,25 +56,25 @@ jobs:
           python src/models/train.py
 
 
-      # ============================================
-      # CHECK ARTIFACTS (CRITICAL)
-      # ============================================
+      # =========================
+      # ARTIFACTS CHECK
+      # =========================
 
-      - name: Check model artifacts
+      - name: Check artifacts
         run: |
           python -c "import os; assert os.path.exists('models/best_model.pkl')"
           python -c "import os; assert os.path.exists('models/features.pkl')"
           python -c "import os; assert os.path.exists('models/best_params.json')"
 
 
-      # ============================================
-      # TEST PREDICTOR (CORE ML PIPELINE)
-      # ============================================
+      # =========================
+      # TEST PREDICTOR (FIXED)
+      # =========================
 
       - name: Test predictor
         run: |
-          python -c "
-from api.predictor import predict_house_price;
+          python - << 'EOF'
+from api.predictor import predict_house_price
 
 sample = {
     'OverallQual': 7,
@@ -102,25 +97,25 @@ sample = {
     'BldgType': '1Fam',
     'MSZoning': 'RL',
     'SaleCondition': 'Normal'
-};
+}
 
-pred = predict_house_price(sample);
-assert isinstance(pred, float);
-print('predictor OK')
-"
+pred = predict_house_price(sample)
+assert isinstance(pred, float)
+print("predictor OK")
+EOF
 
 
-      # ============================================
-      # TEST FASTAPI ENDPOINT (CRITIQUE)
-      # ============================================
+      # =========================
+      # TEST API ENDPOINT (FIXED)
+      # =========================
 
       - name: Test API endpoint
         run: |
-          python -c "
-from fastapi.testclient import TestClient;
-from api.main import app;
+          python - << 'EOF'
+from fastapi.testclient import TestClient
+from api.main import app
 
-client = TestClient(app);
+client = TestClient(app)
 
 sample = {
     'OverallQual': 7,
@@ -143,20 +138,20 @@ sample = {
     'BldgType': '1Fam',
     'MSZoning': 'RL',
     'SaleCondition': 'Normal'
-};
+}
 
-response = client.post('/predict', json=sample);
+response = client.post('/predict', json=sample)
 
-assert response.status_code == 200;
-assert 'predicted_price_usd' in response.json();
+assert response.status_code == 200
+assert "predicted_price_usd" in response.json()
 
-print('API OK')
-"
+print("API OK")
+EOF
 
 
-      # ============================================
-      # PYTEST (SMOKE TESTS)
-      # ============================================
+      # =========================
+      # PYTEST
+      # =========================
 
       - name: Run pytest
         run: |
