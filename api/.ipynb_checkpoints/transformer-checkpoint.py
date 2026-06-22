@@ -8,7 +8,7 @@ from src.features.builder import create_all_features
 # PATH FEATURES (IMPORTANT)
 # ============================================
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+BASE_DIR = Path(__file__).resolve().parents[1]
 FEATURES_PATH = BASE_DIR / "models" / "features.pkl"
 
 
