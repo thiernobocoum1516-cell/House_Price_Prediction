@@ -58,7 +58,6 @@ def load_params():
 
 def train_model(X_train, y_train, params):
 
-    # garder uniquement les vrais hyperparams CatBoost
     allowed_keys = {
         "iterations",
         "depth",
@@ -69,13 +68,16 @@ def train_model(X_train, y_train, params):
 
     clean_params = {k: v for k, v in params.items() if k in allowed_keys}
 
+    # 🔥 IMPORTANT : détecter les colonnes catégorielles
+    cat_features = X_train.select_dtypes(include=["object"]).columns.tolist()
+
     model = CatBoostRegressor(
         **clean_params,
         random_seed=42,
         verbose=False
     )
 
-    model.fit(X_train, y_train)
+    model.fit(X_train, y_train, cat_features=cat_features)
 
     return model
 

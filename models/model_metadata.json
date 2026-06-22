@@ -1,0 +1,8 @@
+{
+    "model_type": "CatBoostRegressor",
+    "metrics": {
+        "r2": 0.9110921192503001,
+        "rmse": 26114.21926345666
+    },
+    "n_features": 85
+}
