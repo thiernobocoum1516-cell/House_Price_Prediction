@@ -58,8 +58,19 @@ def load_params():
 
 def train_model(X_train, y_train, params):
 
+    # garder uniquement les vrais hyperparams CatBoost
+    allowed_keys = {
+        "iterations",
+        "depth",
+        "learning_rate",
+        "l2_leaf_reg",
+        "loss_function"
+    }
+
+    clean_params = {k: v for k, v in params.items() if k in allowed_keys}
+
     model = CatBoostRegressor(
-        **params,
+        **clean_params,
         random_seed=42,
         verbose=False
     )
@@ -67,7 +78,6 @@ def train_model(X_train, y_train, params):
     model.fit(X_train, y_train)
 
     return model
-
 
 # ============================================
 # EVALUATION
