@@ -1,37 +1,31 @@
-import pandas as pd
-from src.data.loader import load_train_data
-from src.features.builder import create_all_features
-
-
-# =========================
-# 1. TEST LOADER
-# =========================
 def test_loader():
     df = load_train_data()
 
-    assert df is not None, "Le DataFrame est None"
-    assert len(df) > 0, "Le dataset est vide"
-    assert "SalePrice" in df.columns, "Colonne SalePrice manquante"
+    assert df is not None
+    assert df.shape[0] > 0
+    assert "SalePrice" in df.columns
 
-
-# =========================
-# 2. TEST FEATURE ENGINEERING
-# =========================
+    # check NaN critique
+    assert df.isnull().sum().sum() >= 0
 def test_feature_engineering():
     df = load_train_data()
     df_feat = create_all_features(df)
 
-    # Vérifie que les nouvelles features existent
-    assert "TotalSF" in df_feat.columns, "TotalSF manquant"
-    assert "HouseAge" in df_feat.columns, "HouseAge manquant"
-    assert "RemodAge" in df_feat.columns, "RemodAge manquant"
+    # features exist
+    expected_features = ["TotalSF", "HouseAge", "RemodAge"]
 
-    # Vérifie que les données ne sont pas cassées
-    assert df_feat.shape[0] > 0, "Feature engineering a supprimé toutes les lignes"
+    for f in expected_features:
+        assert f in df_feat.columns, f"{f} manquant"
 
+    # pas de dataset cassé
+    assert df_feat.shape[0] > 0
 
-# =========================
-# 3. SMOKE TEST GLOBAL
-# =========================
-def test_smoke():
-    assert True
+    # check NaN explosion
+    assert df_feat.isnull().sum().sum() < df_feat.shape[0] * 0.5
+
+    # types OK
+    assert df_feat["TotalSF"].dtype != "object"
+
+def test_no_infinite_values():
+    df = create_all_features(load_train_data())
+    assert (df == float("inf")).sum().sum() == 0
