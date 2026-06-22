@@ -68,9 +68,22 @@ def train_model(X_train, y_train, params):
 
     clean_params = {k: v for k, v in params.items() if k in allowed_keys}
 
-    # 🔥 IMPORTANT : détecter les colonnes catégorielles
+    X_train = X_train.copy()
+
+    # =========================
+    # 1. détecter catégorielles
+    # =========================
     cat_features = X_train.select_dtypes(include=["object"]).columns.tolist()
 
+    # =========================
+    # 2. CLEAN IMPORTANT (FIX ERROR NAN)
+    # =========================
+    for col in cat_features:
+        X_train[col] = X_train[col].fillna("None").astype(str)
+
+    # =========================
+    # 3. train model
+    # =========================
     model = CatBoostRegressor(
         **clean_params,
         random_seed=42,
@@ -80,7 +93,6 @@ def train_model(X_train, y_train, params):
     model.fit(X_train, y_train, cat_features=cat_features)
 
     return model
-
 # ============================================
 # EVALUATION
 # ============================================
