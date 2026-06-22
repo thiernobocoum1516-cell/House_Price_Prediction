@@ -31,7 +31,7 @@ def load_data():
 
 
 # ============================================
-# CHARGEMENT DES HYPERPARAMÈTRES
+# CHARGEMENT DES PARAMÈTRES
 # ============================================
 
 def load_params():
@@ -42,8 +42,7 @@ def load_params():
             params = json.load(f)
         print(" Hyperparamètres chargés depuis best_params.json")
     else:
-        # fallback sécurisé
-        print(" best_params.json introuvable → paramètres par défaut")
+        print(" best_params.json introuvable → fallback")
         params = {
             "iterations": 300,
             "learning_rate": 0.1,
@@ -89,15 +88,40 @@ def evaluate(model, X_test, y_test):
 
 
 # ============================================
-# SAVE MODEL
+# SAVE ARTIFACTS (MODEL + FEATURES + PARAMS)
 # ============================================
 
-def save_model(model):
+def save_artifacts(model, X_train, params, r2, rmse):
 
-    model_path = MODEL_DIR / "best_model.pkl"
-    joblib.dump(model, model_path)
+    # 1. modèle
+    joblib.dump(model, MODEL_DIR / "best_model.pkl")
 
-    print(f"\n Modèle sauvegardé : {model_path}")
+    # 2. features (CRITIQUE POUR L'API)
+    feature_names = X_train.columns.tolist()
+    joblib.dump(feature_names, MODEL_DIR / "features.pkl")
+
+    # 3. paramètres utilisés
+    with open(MODEL_DIR / "best_params.json", "w") as f:
+        json.dump(params, f, indent=4)
+
+    # 4. metadata (optionnel mais propre)
+    metadata = {
+        "model_type": "CatBoostRegressor",
+        "metrics": {
+            "r2": float(r2),
+            "rmse": float(rmse)
+        },
+        "n_features": len(feature_names)
+    }
+
+    with open(MODEL_DIR / "model_metadata.json", "w") as f:
+        json.dump(metadata, f, indent=4)
+
+    print("\n Artifacts sauvegardés :")
+    print(" - best_model.pkl")
+    print(" - features.pkl")
+    print(" - best_params.json")
+    print(" - model_metadata.json")
 
 
 # ============================================
@@ -107,23 +131,23 @@ def save_model(model):
 def main():
 
     print("\n" + "="*60)
-    print(" TRAINING PIPELINE - CATBOOST (MLOPS CLEAN)")
+    print(" TRAINING PIPELINE - CATBOOST CLEAN MLOPS")
     print("="*60)
 
-    # 1. Data
+    # 1. data
     X_train, X_test, y_train, y_test = load_data()
 
-    # 2. Params
+    # 2. params
     params = load_params()
 
-    # 3. Train
+    # 3. train
     model = train_model(X_train, y_train, params)
 
-    # 4. Eval
-    evaluate(model, X_test, y_test)
+    # 4. eval
+    r2, rmse = evaluate(model, X_test, y_test)
 
-    # 5. Save
-    save_model(model)
+    # 5. save everything
+    save_artifacts(model, X_train, params, r2, rmse)
 
     print("\n Pipeline terminé avec succès")
 

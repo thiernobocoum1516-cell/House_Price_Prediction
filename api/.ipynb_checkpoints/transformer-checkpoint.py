@@ -1,40 +1,42 @@
 import pandas as pd
+import joblib
+from pathlib import Path
 from src.features.builder import create_all_features
-import pandas as pd
 
 
-EXPECTED_COLS = [
-    'MSSubClass', 'MSZoning', 'LotFrontage', 'LotArea', 'Street', 'Alley',
-    'LotShape', 'LandContour', 'Utilities', 'LotConfig', 'LandSlope',
-    'Neighborhood', 'Condition1', 'Condition2', 'BldgType', 'HouseStyle',
-    'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd', 'RoofStyle',
-    'RoofMatl', 'Exterior1st', 'Exterior2nd', 'MasVnrType', 'MasVnrArea',
-    'ExterQual', 'ExterCond', 'Foundation', 'BsmtQual', 'BsmtCond',
-    'BsmtExposure', 'BsmtFinType1', 'BsmtFinSF1', 'BsmtFinType2',
-    'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', 'Heating', 'HeatingQC',
-    'CentralAir', 'Electrical', '1stFlrSF', '2ndFlrSF', 'LowQualFinSF',
-    'GrLivArea', 'BsmtFullBath', 'BsmtHalfBath', 'FullBath', 'HalfBath',
-    'BedroomAbvGr', 'KitchenAbvGr', 'KitchenQual', 'TotRmsAbvGrd',
-    'Functional', 'Fireplaces', 'FireplaceQu', 'GarageType',
-    'GarageYrBlt', 'GarageFinish', 'GarageCars', 'GarageArea',
-    'GarageQual', 'GarageCond', 'PavedDrive', 'WoodDeckSF',
-    'OpenPorchSF', 'EnclosedPorch', '3SsnPorch', 'ScreenPorch',
-    'PoolArea', 'PoolQC', 'Fence', 'MiscFeature', 'MiscVal',
-    'MoSold', 'YrSold', 'SaleType', 'SaleCondition',
-    'QualityArea', 'TotalSF', 'HouseAge', 'RemodAge', 'TotalBath',
-    'TotalPorchSF'
-]
+# ============================================
+# PATH FEATURES (IMPORTANT)
+# ============================================
 
+BASE_DIR = Path(__file__).resolve().parents[2]
+FEATURES_PATH = BASE_DIR / "models" / "features.pkl"
+
+
+# ============================================
+# LOAD FEATURES (SOURCE UNIQUE DE VÉRITÉ)
+# ============================================
+
+def load_features():
+    return joblib.load(FEATURES_PATH)
+
+
+# ============================================
+# TRANSFORM INPUT
+# ============================================
 
 def transform_input(data: dict):
 
     df = pd.DataFrame([data])
 
-    # =========================
-    # DEFAULT VALUES (robustes)
-    # =========================
+    # ========================================
+    # 1. COMPLETER VARIABLES MANQUANTES
+    # ========================================
+
+    # defaults minimal API (UNIQUEMENT INPUT SIDE)
     defaults = {
         "MSSubClass": 20,
+        "MSZoning": "RL",
+        "LotFrontage": 70,
         "Street": "Pave",
         "Alley": "None",
         "LotShape": "Reg",
@@ -60,11 +62,16 @@ def transform_input(data: dict):
         "BsmtFinType2": "Unf",
         "BsmtFinSF2": 0,
         "BsmtUnfSF": 0,
+        "TotalBsmtSF": 0,
         "Heating": "GasA",
         "HeatingQC": "Ex",
         "CentralAir": "Y",
         "Electrical": "SBrkr",
+        "1stFlrSF": 0,
+        "2ndFlrSF": 0,
         "LowQualFinSF": 0,
+        "BsmtFullBath": 0,
+        "BsmtHalfBath": 0,
         "KitchenAbvGr": 1,
         "KitchenQual": "TA",
         "TotRmsAbvGrd": 6,
@@ -73,6 +80,8 @@ def transform_input(data: dict):
         "GarageType": "Attchd",
         "GarageYrBlt": 2000,
         "GarageFinish": "Unf",
+        "GarageCars": 0,
+        "GarageArea": 0,
         "GarageQual": "TA",
         "GarageCond": "TA",
         "PavedDrive": "Y",
@@ -88,21 +97,25 @@ def transform_input(data: dict):
         "MiscVal": 0,
         "MoSold": 6,
         "YrSold": 2010,
-        "SaleType": "WD"
+        "SaleType": "WD",
+        "SaleCondition": "Normal"
     }
 
     for k, v in defaults.items():
         if k not in df.columns:
             df[k] = v
 
-    # =========================
-    # FEATURES ENGINEERED
-    # =========================
+    # ========================================
+    # 2. FEATURE ENGINEERING (IDENTIQUE TRAIN)
+    # ========================================
+
     df = create_all_features(df)
 
-    # =========================
-    # ALIGNEMENT EXACT MODELE
-    # =========================
-    df = df.reindex(columns=EXPECTED_COLS)
+    # ========================================
+    # 3. ALIGNEMENT FINAL (CRITIQUE)
+    # ========================================
+
+    features = load_features()
+    df = df.reindex(columns=features, fill_value=0)
 
     return df

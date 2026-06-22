@@ -3,15 +3,20 @@ name: ML Pipeline CI
 on:
   push:
     branches: [main]
-
   pull_request:
     branches: [main]
+
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
+
+      # ============================================
+      # SETUP
+      # ============================================
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -28,37 +33,131 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
 
-      # -------------------------
-      # TEST LOADER
-      # -------------------------
+
+      # ============================================
+      # DATA PIPELINE TEST
+      # ============================================
+
       - name: Test loader
         run: |
-          python -c "from src.data.loader import load_train_data; df = load_train_data(); print(df.shape)"
+          python -c "from src.data.loader import load_train_data; df = load_train_data(); assert df.shape[0] > 0"
 
-      # -------------------------
-      # TEST FEATURE ENGINEERING
-      # -------------------------
-      - name: Test builder
+
+      - name: Test feature engineering
         run: |
-          python -c "from src.features.builder import create_all_features; print('builder OK')"
+          python -c "from src.features.builder import create_all_features; import pandas as pd; df = pd.DataFrame({'GrLivArea':[1500],'LotArea':[8000]}); assert df is not None"
 
-      # -------------------------
-      # BUILD DATASET
-      # -------------------------
+
+      # ============================================
+      # BUILD DATASET + TRAINING
+      # ============================================
+
       - name: Build dataset
         run: |
           python scripts/build_dataset.py
 
-      # -------------------------
-      # TEST TRAIN MODULE
-      # -------------------------
-      - name: Test train import
+      - name: Train model
         run: |
-          python -c "import src.models.train; print('train import OK')"
+          python src/models/train.py
 
-      # -------------------------
-      # RUN PYTEST
-      # -------------------------
-      - name: Run tests
+
+      # ============================================
+      # CHECK ARTIFACTS (CRITICAL)
+      # ============================================
+
+      - name: Check model artifacts
+        run: |
+          python -c "import os; assert os.path.exists('models/best_model.pkl')"
+          python -c "import os; assert os.path.exists('models/features.pkl')"
+          python -c "import os; assert os.path.exists('models/best_params.json')"
+
+
+      # ============================================
+      # TEST PREDICTOR (CORE ML PIPELINE)
+      # ============================================
+
+      - name: Test predictor
+        run: |
+          python -c "
+from api.predictor import predict_house_price;
+
+sample = {
+    'OverallQual': 7,
+    'OverallCond': 5,
+    'ExterQual': 'TA',
+    'GrLivArea': 1500,
+    'LotArea': 8000,
+    'TotalBsmtSF': 800,
+    'LotFrontage': 70,
+    'YearBuilt': 2005,
+    'YearRemodAdd': 2010,
+    'GarageCars': 2,
+    'GarageArea': 400,
+    'FullBath': 2,
+    'HalfBath': 1,
+    'Fireplaces': 1,
+    'BedroomAbvGr': 3,
+    'Neighborhood': 'CollgCr',
+    'HouseStyle': '1Story',
+    'BldgType': '1Fam',
+    'MSZoning': 'RL',
+    'SaleCondition': 'Normal'
+};
+
+pred = predict_house_price(sample);
+assert isinstance(pred, float);
+print('predictor OK')
+"
+
+
+      # ============================================
+      # TEST FASTAPI ENDPOINT (CRITIQUE)
+      # ============================================
+
+      - name: Test API endpoint
+        run: |
+          python -c "
+from fastapi.testclient import TestClient;
+from api.main import app;
+
+client = TestClient(app);
+
+sample = {
+    'OverallQual': 7,
+    'OverallCond': 5,
+    'ExterQual': 'TA',
+    'GrLivArea': 1500,
+    'LotArea': 8000,
+    'TotalBsmtSF': 800,
+    'LotFrontage': 70,
+    'YearBuilt': 2005,
+    'YearRemodAdd': 2010,
+    'GarageCars': 2,
+    'GarageArea': 400,
+    'FullBath': 2,
+    'HalfBath': 1,
+    'Fireplaces': 1,
+    'BedroomAbvGr': 3,
+    'Neighborhood': 'CollgCr',
+    'HouseStyle': '1Story',
+    'BldgType': '1Fam',
+    'MSZoning': 'RL',
+    'SaleCondition': 'Normal'
+};
+
+response = client.post('/predict', json=sample);
+
+assert response.status_code == 200;
+assert 'predicted_price_usd' in response.json();
+
+print('API OK')
+"
+
+
+      # ============================================
+      # PYTEST (SMOKE TESTS)
+      # ============================================
+
+      - name: Run pytest
         run: |
           pytest -v
