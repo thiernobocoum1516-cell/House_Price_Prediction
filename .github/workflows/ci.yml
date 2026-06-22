@@ -39,7 +39,7 @@ jobs:
       # -------------------------
       - name: Build dataset
         run: |
-          python scripts/build_dataset.py
+          python script/build_dataset.py
 
       # -------------------------
       # TEST TRAIN MODULE
