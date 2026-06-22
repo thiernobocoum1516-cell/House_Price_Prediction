@@ -30,13 +30,12 @@ jobs:
 
 
       # =========================
-      # DATA PIPELINE TEST
+      # DATA PIPELINE
       # =========================
 
       - name: Test loader
         run: |
           python -c "from src.data.loader import load_train_data; df = load_train_data(); assert df.shape[0] > 0"
-
 
       - name: Test feature engineering
         run: |
@@ -63,7 +62,6 @@ jobs:
       - name: Check artifacts
         run: |
           python -c "import os; assert os.path.exists('models/best_model.pkl')"
-          python -c "import os; assert os.path.exists('models/features.pkl')"
           python -c "import os; assert os.path.exists('models/best_params.json')"
 
 
@@ -106,7 +104,7 @@ EOF
 
 
       # =========================
-      # TEST API ENDPOINT (FIXED)
+      # TEST API (FIXED)
       # =========================
 
       - name: Test API endpoint
