@@ -12,6 +12,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 
 MODEL_PATH = BASE_DIR / "models" / "best_model.pkl"
 FEATURES_PATH = BASE_DIR / "models" / "features.pkl"
+CAT_FEATURES_PATH = BASE_DIR / "models" / "cat_features.pkl"
 
 
 # ============================================
@@ -20,6 +21,7 @@ FEATURES_PATH = BASE_DIR / "models" / "features.pkl"
 
 model = joblib.load(MODEL_PATH)
 features = joblib.load(FEATURES_PATH)
+cat_features = joblib.load(CAT_FEATURES_PATH)
 
 
 # ============================================
@@ -28,13 +30,18 @@ features = joblib.load(FEATURES_PATH)
 
 def predict_house_price(data: dict):
 
-    # 1. transformer input → features engineering
+    # 1. transformation + feature engineering
     df = transform_input(data)
 
-    # 2. ALIGNEMENT CRITIQUE (IMPORTANT)
+    # 2. alignement colonnes (CRITIQUE)
     df = df.reindex(columns=features, fill_value=0)
 
-    # 3. prediction
+    # 3. sécurité CatBoost : forcer les catégories en string
+    for col in cat_features:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
+
+    # 4. prediction
     pred = model.predict(df)
 
     return float(pred[0])

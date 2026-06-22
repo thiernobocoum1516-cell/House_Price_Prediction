@@ -5,34 +5,28 @@ from src.features.builder import create_all_features
 
 
 # ============================================
-# PATH FEATURES (IMPORTANT)
+# PATH FEATURES
 # ============================================
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 FEATURES_PATH = BASE_DIR / "models" / "features.pkl"
 
 
-# ============================================
-# LOAD FEATURES (SOURCE UNIQUE DE VÉRITÉ)
-# ============================================
-
 def load_features():
     return joblib.load(FEATURES_PATH)
 
 
 # ============================================
-# TRANSFORM INPUT
+# TRANSFORM INPUT SAFE
 # ============================================
 
 def transform_input(data: dict):
 
     df = pd.DataFrame([data])
 
-    # ========================================
-    # 1. COMPLETER VARIABLES MANQUANTES
-    # ========================================
-
-    # defaults minimal API (UNIQUEMENT INPUT SIDE)
+    # ============================
+    # 1. DEFAULT VALUES
+    # ============================
     defaults = {
         "MSSubClass": 20,
         "MSZoning": "RL",
@@ -105,16 +99,23 @@ def transform_input(data: dict):
         if k not in df.columns:
             df[k] = v
 
-    # ========================================
-    # 2. FEATURE ENGINEERING (IDENTIQUE TRAIN)
-    # ========================================
-
+    # ============================
+    # 2. FEATURE ENGINEERING
+    # ============================
     df = create_all_features(df)
 
-    # ========================================
-    # 3. ALIGNEMENT FINAL (CRITIQUE)
-    # ========================================
+    # ============================
+    # 3. CLEAN TYPES (IMPORTANT FIX)
+    # ============================
+    for col in df.select_dtypes(include=["object"]).columns:
+        df[col] = df[col].fillna("None").astype(str)
 
+    for col in df.select_dtypes(include=["number"]).columns:
+        df[col] = df[col].fillna(0)
+
+    # ============================
+    # 4. ALIGNMENT FINAL
+    # ============================
     features = load_features()
     df = df.reindex(columns=features, fill_value=0)
 

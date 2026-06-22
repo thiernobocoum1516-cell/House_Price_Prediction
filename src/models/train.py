@@ -130,13 +130,20 @@ def save_artifacts(model, X_train, cat_features, params, r2, rmse):
 
     print("\n[INFO] saving artifacts in:", MODEL_DIR)
 
+    # 1. modèle
     joblib.dump(model, MODEL_DIR / "best_model.pkl")
+
+    # 2. features globales
     joblib.dump(X_train.columns.tolist(), MODEL_DIR / "features.pkl")
+
+    # 3. catégories (IMPORTANT POUR CATBOOST + API)
     joblib.dump(cat_features, MODEL_DIR / "cat_features.pkl")
 
+    # 4. hyperparams
     with open(MODEL_DIR / "best_params.json", "w") as f:
         json.dump(params, f, indent=4)
 
+    # 5. metadata
     metadata = {
         "model": "CatBoostRegressor",
         "r2": float(r2),
@@ -148,7 +155,6 @@ def save_artifacts(model, X_train, cat_features, params, r2, rmse):
         json.dump(metadata, f, indent=4)
 
     print("[OK] artifacts saved")
-
 
 # ============================================
 # MAIN PIPELINE

@@ -61,10 +61,10 @@ jobs:
           python -c "import os; assert os.path.exists('models/best_params.json')"
 
       # =========================
-      # TEST PREDICTOR (FIXED)
+      # TEST PREDICTOR
       # =========================
 
-      - name: Test predictor
+      - name: Test predictor (inline)
         run: |
           python - << 'EOF'
           from api.predictor import predict_house_price
@@ -97,8 +97,12 @@ jobs:
           print("OK predictor")
           EOF
 
+      - name: Run prediction test (script)
+        run: |
+          python scripts/ci_test_prediction.py
+
       # =========================
-      # TEST API (FIXED)
+      # TEST API
       # =========================
 
       - name: Test API endpoint
