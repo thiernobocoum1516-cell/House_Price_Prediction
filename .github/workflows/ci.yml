@@ -40,7 +40,7 @@ jobs:
       # -------------------------
       - name: Test building
         run: |
-          python -c "from src.features.builder import Preprocessor; print('builder OK')"
+          python -c "from src.features.builder import create_all_features; print('builder OK')"
 
       # -------------------------
       # TEST TRAIN MODULE
