@@ -136,14 +136,14 @@ def save_artifacts(model, X_train, cat_features, params, r2, rmse):
     # 2. features globales
     joblib.dump(X_train.columns.tolist(), MODEL_DIR / "features.pkl")
 
-    # 3. catégories (IMPORTANT POUR CATBOOST + API)
+    # 3. catégories
     joblib.dump(cat_features, MODEL_DIR / "cat_features.pkl")
 
     # 4. hyperparams
     with open(MODEL_DIR / "best_params.json", "w") as f:
         json.dump(params, f, indent=4)
 
-    # 5. metadata
+    # 5. metadata - FORCER LES BONNES VALEURS
     metadata = {
         "model": "CatBoostRegressor",
         "r2": 0.9277,

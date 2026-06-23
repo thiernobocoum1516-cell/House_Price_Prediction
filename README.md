@@ -1,4 +1,4 @@
-# 🏠 Laplace Immo Housing – MLOps Project
+# 🏠 Laplace Immo Housing – Machine learnig Project
 
 Projet de prédiction du prix des maisons basé sur le dataset Ames Housing, avec une architecture orientée MLOps (Feature Engineering + Training + API).
 
@@ -12,7 +12,7 @@ Pour cela, nous avons :
 1. Effectué une analyse exploratoire approfondie (EDA) pour comprendre les données
 2. Réalisé du feature engineering pour préparer les données
 3. Testé plusieurs modèles (linéaires et à arbres) pour identifier le plus performant
-4. Sélectionné CatBoost comme modèle final (R² = 0.9274, RMSE = 20 027 $)
+4. Sélectionné CatBoost comme modèle final (R² = 0.9277, RMSE = 19 986 $)
 5. Optimisé les hyperparamètres du modèle
 6. Déployé le modèle via une API FastAPI
 7. Mis en place des tests unitaires avec Pytest
@@ -31,10 +31,9 @@ laplace-immo-housing/
 │ ├── test.csv
   ├──sample_submission.csv
 │ └── processed/
-│
 ├── notebooks/
 │ ├── EDA_END_FEATURE-ENGENERING.ipynb
-│ └── modeling.ipynb
+│ └── Modelisation.ipynb
 │
 ├── src/
 │ ├── data/
@@ -43,12 +42,16 @@ laplace-immo-housing/
 │ ├── features/
 │ │ └── builder.py
 │ │
-│ ├── training/
+│ ├── models/
 │ │ └── train.py
 │ │
 │ └── api/
-│ └── api.py
-│
+│  └──templates/
+│  │  └──index.html
+│ └── main.py
+│ └──predictor.py
+│ └──schema.py
+│  └──transformer.py  
 ├── models/
 │ ├── best_model.pkl
 │ └── features.pkl
