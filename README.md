@@ -1,63 +1,181 @@
-# 🏠 House Price Prediction
+# 🏠 Laplace Immo Housing – MLOps Project
 
-## 📌 Description
-Ce projet est un pipeline MLOps de prédiction des prix immobiliers basé sur du Machine Learning.
-
-Il inclut :
-- Analyse exploratoire des données (EDA)
-- Prétraitement des données
-- Entraînement d’un modèle de régression
-- Tests automatiques avec pytest
-- Intégration continue avec GitHub Actions (CI/CD)
+Projet de prédiction du prix des maisons basé sur le dataset Ames Housing, avec une architecture orientée MLOps (Feature Engineering + Training + API).
 
 ---
 
-## 📁 Structure du projet
+## 🚀 Objectif
 
+Construire un pipeline complet de Machine Learning capable de :
+
+- Nettoyer et transformer les données
+- Créer des features métier
+- Entraîner un modèle de régression
+- Servir des prédictions via une API FastAPI
+
+---
+
+## 📁 Architecture du projet
 laplace-immo-housing/
-├── .github/
-├── notebooks/
-├── src/
-├── tests/
+│
 ├── data/
+│ ├── train.csv
+│ ├── test.csv
+  ├──sample_submission.csv
+│ └── processed/
+│
+├── notebooks/
+│ ├── EDA_END_FEATURE-ENGENERING.ipynb
+│ └── modeling.ipynb
+│
+├── src/
+│ ├── data/
+│ │ └── loader.py
+│ │
+│ ├── features/
+│ │ └── builder.py
+│ │
+│ ├── training/
+│ │ └── train.py
+│ │
+│ └── api/
+│ └── api.py
+│
 ├── models/
+│ ├── best_model.pkl
+│ └── features.pkl
+│ └── best_params.pkl
+│
 ├── requirements.txt
-├── ci.yml
-├── README.md
+├──tests
+├──setup.py
+└── README.md 
 
+---
 
-## ⚙️ Installation
+## ⚙️ Pipeline ML
 
-Clone le projet puis installe les dépendances :
+### 1. Data Loading
+Les données sont chargées via `loader.py` :
+- suppression de `Id`
+- gestion des valeurs manquantes catégorielles
 
-git clone https://github.com/thiernobocoum1516-cell/House_Price_Prediction.git
-cd House_Price_Prediction
+---
+
+### 2. Feature Engineering
+Dans `builder.py`, création des variables :
+
+- `QualityArea`
+- `TotalSF`
+- `HouseAge`
+- `RemodAge`
+- `TotalBath`
+- `TotalPorchSF`
+
+---
+
+### 3. Preprocessing
+
+Le pipeline inclut :
+
+- Imputation intelligente (quartiers, médianes, modes)
+- Encodage des variables catégorielles (LabelEncoder)
+- Standardisation des variables numériques (StandardScaler)
+- Sélection de features (LassoCV)
+
+---
+
+### 4. Modèle
+
+Modèle de régression entraîné sur les features transformées.
+
+Sortie :
+best_model.pkl
+
+### 5. ⚙️ Interface de prédiction (Dashboard ML)
+
+L’application propose une interface web interactive permettant de prédire le prix d’une maison en temps réel.
+
+---
+
+#### 🧠 Description
+
+L’utilisateur saisit directement les caractéristiques de la maison via un formulaire web :
+
+- variables numériques (surface, année, qualité…)
+- variables catégorielles (MSZoning, HouseStyle, etc.)
+
+---
+
+#### 🚀 Fonctionnement
+
+1. L’utilisateur remplit le formulaire
+2. Les données sont envoyées au backend FastAPI
+3. Le pipeline ML est exécuté :
+   - Feature engineering
+   - Préprocessing (encodage + scaling)
+   - Prédiction via CatBoost
+4. Le résultat est affiché instantanément
+
+---
+
+#### 📊 Résultats affichés
+
+L’interface affiche aussi :
+
+- 🧠 Modèle utilisé : CatBoostRegressor
+- 📈 R² Score : 0.909
+- 📉 RMSE : 26 459
+- 🔢 Nombre de features : 85
+
+---
+
+#### 💰 Exemple de sortie
+
+👉 Predicted Price : **$157,258.65**
+
+---
+
+## Lancer le projet
+### 1. Installer les dépendances
+
 pip install -r requirements.txt
 
-## 🚀 Lancer les tests
-pytest tests/
+### 2. Entraîner le modèle
 
-## 🤖 Objectif du projet
+python src/features/builder.py --mode train --model_dir models/
+python src/training/train.py
 
-Prédire le prix des logements à partir de leurs caractéristiques (surface, nombre de pièces, localisation, etc.).
+### 3. Lancer l’API
 
+uvicorn src.api.api:app --reload
 
-## 🔄 CI/CD (GitHub Actions)
+### 4. Documentation API
 
-À chaque push sur la branche main :
+Accès Swagger : 
+http://127.0.0.1:8000/docs
 
-* installation des dépendances
-* exécution des tests
-* validation automatique du code
+## Points clés MLOps
 
+-Pipeline reproductible
+-Feature engineering centralisé
+-Séparation training / inference
+-API indépendante du notebook
+-Modèle sérialisé (.pkl)
 
-## 👤 Auteurs
+## Problèmes résolus pendant le projet
 
-* Thierno Bocoum
-* Seydina Omar Dioum
-* Ndeye Codou Mbodj
+-Désalignement des features (MSZoning, Id)
+-Erreurs CatBoost feature mismatch
+-Incohérence notebook vs API
+-Gestion des valeurs manquantes
 
+## Auteur 
 
-## 🧠 Statut du projet
+Ce projet est réalisé par :
 
-Projet en cours de développement dans un cadre d’apprentissage du Machine Learning.
+Thierno BOCOUM
+
+Ndeye Codou MBODJI
+
+Seydina Omar DIOUM
