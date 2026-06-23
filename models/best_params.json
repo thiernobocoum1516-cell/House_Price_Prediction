@@ -4,15 +4,15 @@
     "hyperparameters": {
         "iterations": 100,
         "learning_rate": 0.2,
-        "depth": 4,
+        "depth": 8,
         "loss_function": "RMSE",
         "random_seed": 42,
         "verbose": false
     },
     "performance": {
-        "R\u00b2": 0.9121,
-        "RMSE": 25959,
-        "MAE": 16067
+        "R\u00b2": 0.9276867769407229,
+        "RMSE": 19985.958285443416,
+        "MAE": 14851.606786859049
     },
     "features_used": [
         "MSSubClass",

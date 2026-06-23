@@ -1,6 +1,6 @@
 {
     "model": "CatBoostRegressor",
-    "r2": 0.9274,
-    "rmse": 20027,
+    "r2": 0.9277,
+    "rmse": 19986,
     "n_features": 85
 } 
