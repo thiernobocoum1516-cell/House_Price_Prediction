@@ -1,9 +1,17 @@
-from fastapi import FastAPI
+from pathlib import Path
+import json
+
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 from api.schema import HouseInput
 from api.predictor import predict_house_price
 
+
+# ============================================
+# APP
+# ============================================
 
 app = FastAPI(
     title="🏠 House Price Prediction API",
@@ -11,25 +19,36 @@ app = FastAPI(
     version="1.0.0"
 )
 
+templates = Jinja2Templates(directory="api/templates")
+
+
+# ============================================
+# LOAD MODEL METADATA
+# ============================================
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+
+with open(BASE_DIR / "models" / "model_metadata.json", "r") as f:
+    metadata = json.load(f)
+
 
 # ============================================
 # HOME PAGE
 # ============================================
 
 @app.get("/", response_class=HTMLResponse)
-def home():
-    return """
-    <html>
-        <head>
-            <title>House Price API</title>
-        </head>
-        <body style="font-family:Arial; text-align:center; margin-top:50px;">
-            <h1>🏠 House Price Prediction API</h1>
-            <p>CatBoost ML Pipeline - Clean Architecture</p>
-            <p><a href="/docs">Swagger Docs</a></p>
-        </body>
-    </html>
-    """
+def home(request: Request):
+
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "model": metadata["model"],
+            "r2": metadata["r2"],
+            "rmse": metadata["rmse"],
+            "n_features": metadata["n_features"]
+        }
+    )
 
 
 # ============================================

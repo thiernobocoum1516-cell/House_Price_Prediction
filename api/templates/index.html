@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Price Prediction</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            cursor: pointer;
+            background: black;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+
+        #result {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        /* ===== DASHBOARD ===== */
+        .metrics-wrapper {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .metric-card {
+            color: white;
+            padding: 20px;
+            border-radius: 14px;
+            text-align: center;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        }
+
+        .metric-title {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+
+        .metric-value {
+            font-size: 26px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🏠 House Price Prediction</h1>
+
+<div class="container">
+
+    <!-- FORM -->
+    <div class="grid">
+
+        <div class="field">
+            <label>OverallQual</label>
+            <input id="OverallQual" type="number" value="7">
+        </div>
+
+        <div class="field">
+            <label>OverallCond</label>
+            <input id="OverallCond" type="number" value="5">
+        </div>
+
+        <div class="field">
+            <label>GrLivArea</label>
+            <input id="GrLivArea" type="number" value="1500">
+        </div>
+
+        <div class="field">
+            <label>LotArea</label>
+            <input id="LotArea" type="number" value="8000">
+        </div>
+
+        <div class="field">
+            <label>TotalBsmtSF</label>
+            <input id="TotalBsmtSF" type="number" value="800">
+        </div>
+
+        <div class="field">
+            <label>LotFrontage</label>
+            <input id="LotFrontage" type="number" value="70">
+        </div>
+
+        <div class="field">
+            <label>YearBuilt</label>
+            <input id="YearBuilt" type="number" value="2005">
+        </div>
+
+        <div class="field">
+            <label>YearRemodAdd</label>
+            <input id="YearRemodAdd" type="number" value="2010">
+        </div>
+
+        <div class="field">
+            <label>GarageCars</label>
+            <input id="GarageCars" type="number" value="2">
+        </div>
+
+        <div class="field">
+            <label>GarageArea</label>
+            <input id="GarageArea" type="number" value="400">
+        </div>
+
+        <div class="field">
+            <label>FullBath</label>
+            <input id="FullBath" type="number" value="2">
+        </div>
+
+        <div class="field">
+            <label>HalfBath</label>
+            <input id="HalfBath" type="number" value="1">
+        </div>
+
+        <div class="field">
+            <label>Fireplaces</label>
+            <input id="Fireplaces" type="number" value="1">
+        </div>
+
+        <div class="field">
+            <label>BedroomAbvGr</label>
+            <input id="BedroomAbvGr" type="number" value="3">
+        </div>
+
+        <div class="field">
+            <label>ExterQual</label>
+            <select id="ExterQual">
+                <option>Ex</option>
+                <option>Gd</option>
+                <option selected>TA</option>
+                <option>Fa</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>Neighborhood</label>
+            <select id="Neighborhood">
+                <option selected>CollgCr</option>
+                <option>NAmes</option>
+                <option>OldTown</option>
+                <option>Edwards</option>
+                <option>Somerst</option>
+                <option>Gilbert</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>HouseStyle</label>
+            <select id="HouseStyle">
+                <option selected>1Story</option>
+                <option>2Story</option>
+                <option>1.5Fin</option>
+                <option>SLvl</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>BldgType</label>
+            <select id="BldgType">
+                <option selected>1Fam</option>
+                <option>Duplex</option>
+                <option>TwnhsE</option>
+                <option>Twnhs</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>MSZoning</label>
+            <select id="MSZoning">
+                <option selected>RL</option>
+                <option>RM</option>
+                <option>FV</option>
+                <option>RH</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>SaleCondition</label>
+            <select id="SaleCondition">
+                <option selected>Normal</option>
+                <option>Abnorml</option>
+                <option>Partial</option>
+                <option>Family</option>
+            </select>
+        </div>
+
+    </div>
+
+    <button onclick="predictPrice()">Predict Price</button>
+
+    <div id="result"></div>
+
+    <!-- DASHBOARD -->
+    <div class="metrics-wrapper">
+
+        <div class="metric-card" style="background:linear-gradient(135deg,#1e3c72,#2a5298);">
+            <div class="metric-title">🤖 Model</div>
+            <div class="metric-value">{{ model }}</div>
+        </div>
+
+        <div class="metric-card" style="background:linear-gradient(135deg,#11998e,#38ef7d);">
+            <div class="metric-title">📊 R² Score</div>
+            <div class="metric-value">{{ "%.3f"|format(r2) }}</div>
+        </div>
+
+        <div class="metric-card" style="background:linear-gradient(135deg,#ff416c,#ff4b2b);">
+            <div class="metric-title">📉 RMSE</div>
+            <div class="metric-value">${{ "%.0f"|format(rmse) }}</div>
+        </div>
+
+        <div class="metric-card" style="background:linear-gradient(135deg,#7F00FF,#E100FF);">
+            <div class="metric-title">⚙️ Features</div>
+            <div class="metric-value">{{ n_features }}</div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+async function predictPrice() {
+
+    const payload = {
+        OverallQual: Number(document.getElementById("OverallQual").value),
+        OverallCond: Number(document.getElementById("OverallCond").value),
+        GrLivArea: Number(document.getElementById("GrLivArea").value),
+        LotArea: Number(document.getElementById("LotArea").value),
+        TotalBsmtSF: Number(document.getElementById("TotalBsmtSF").value),
+        LotFrontage: Number(document.getElementById("LotFrontage").value),
+        YearBuilt: Number(document.getElementById("YearBuilt").value),
+        YearRemodAdd: Number(document.getElementById("YearRemodAdd").value),
+        GarageCars: Number(document.getElementById("GarageCars").value),
+        GarageArea: Number(document.getElementById("GarageArea").value),
+        FullBath: Number(document.getElementById("FullBath").value),
+        HalfBath: Number(document.getElementById("HalfBath").value),
+        Fireplaces: Number(document.getElementById("Fireplaces").value),
+        BedroomAbvGr: Number(document.getElementById("BedroomAbvGr").value),
+        ExterQual: document.getElementById("ExterQual").value,
+        Neighborhood: document.getElementById("Neighborhood").value,
+        HouseStyle: document.getElementById("HouseStyle").value,
+        BldgType: document.getElementById("BldgType").value,
+        MSZoning: document.getElementById("MSZoning").value,
+        SaleCondition: document.getElementById("SaleCondition").value
+    };
+
+    const response = await fetch("/predict", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").innerHTML =
+        "💰 Predicted Price: $" + Number(data.predicted_price_usd).toLocaleString();
+}
+</script>
+
+</body>
+</html>
