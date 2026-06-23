@@ -42,8 +42,8 @@ def load_params():
         print("[INFO] params loaded")
     else:
         params = {
-            "iterations": 300,
-            "learning_rate": 0.05,
+            "iterations": 100,
+            "learning_rate": 0.2,
             "depth": 6,
             "loss_function": "RMSE"
         }
