@@ -84,12 +84,11 @@ Dans `builder.py`, création des variables :
 
 ### 3. Preprocessing
 
-Le pipeline inclut :
-
-- Imputation intelligente (quartiers, médianes, modes)
-- Encodage des variables catégorielles (LabelEncoder)
-- Standardisation des variables numériques (StandardScaler)
-- Sélection de features (LassoCV)
+Le prétraitement des données comprend :
+→ Imputation (quartiers, médianes, modes)
+→ Encodage des variables catégorielles (LabelEncoder)
+→ Standardisation des variables numériques (StandardScaler)
+→ Sélection de features (LassoCV)
 
 ---
 
