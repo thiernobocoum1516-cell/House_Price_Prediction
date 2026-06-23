@@ -179,3 +179,5 @@ Thierno BOCOUM
 Ndeye Codou MBODJI
 
 Seydina Omar DIOUM
+
+ici le lien de la présentation: https://canva.link/ndw34pyu6jvmfv1
