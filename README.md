@@ -5,13 +5,21 @@ Projet de prédiction du prix des maisons basé sur le dataset Ames Housing, ave
 ---
 
 ## 🚀 Objectif
+L'objectif de ce projet est de concevoir un système complet de prédiction des prix 
+immobiliers, allant de l'analyse exploratoire des données au déploiement d'une API.
 
-Construire un pipeline complet de Machine Learning capable de :
+Pour cela, nous avons :
+1. Effectué une analyse exploratoire approfondie (EDA) pour comprendre les données
+2. Réalisé du feature engineering pour préparer les données
+3. Testé plusieurs modèles (linéaires et à arbres) pour identifier le plus performant
+4. Sélectionné CatBoost comme modèle final (R² = 0.9274, RMSE = 20 027 $)
+5. Optimisé les hyperparamètres du modèle
+6. Déployé le modèle via une API FastAPI
+7. Mis en place des tests unitaires avec Pytest
+8. Automatisé le déploiement continu avec GitHub Actions
 
-- Nettoyer et transformer les données
-- Créer des features métier
-- Entraîner un modèle de régression
-- Servir des prédictions via une API FastAPI
+Le résultat est un système fiable et robuste pour estimer le prix des maisons 
+avec une erreur moyenne d'environ 20 000 $.
 
 ---
 
@@ -53,7 +61,7 @@ laplace-immo-housing/
 
 ---
 
-## ⚙️ Pipeline ML
+## ⚙️ Processus
 
 ### 1. Data Loading
 Les données sont chargées via `loader.py` :
@@ -111,10 +119,10 @@ L’utilisateur saisit directement les caractéristiques de la maison via un for
 
 1. L’utilisateur remplit le formulaire
 2. Les données sont envoyées au backend FastAPI
-3. Le pipeline ML est exécuté :
-   - Feature engineering
-   - Préprocessing (encodage + scaling)
-   - Prédiction via CatBoost
+Le processus de modélisation comprend les étapes suivantes :
+→ Feature Engineering
+→ Préprocessing (encodage + standardisation)
+→ Prédiction via CatBoost
 4. Le résultat est affiché instantanément
 
 ---
@@ -124,8 +132,8 @@ L’utilisateur saisit directement les caractéristiques de la maison via un for
 L’interface affiche aussi :
 
 - 🧠 Modèle utilisé : CatBoostRegressor
-- 📈 R² Score : 0.909
-- 📉 RMSE : 26 459
+- 📈 R² Score : 0.9274
+- 📉 RMSE : 20027$
 - 🔢 Nombre de features : 85
 
 ---
@@ -176,7 +184,7 @@ Ce projet est réalisé par :
 
 Thierno BOCOUM
 
-Ndeye Codou MBODJI
+Ndeye Codou MBODJ
 
 Seydina Omar DIOUM
 
