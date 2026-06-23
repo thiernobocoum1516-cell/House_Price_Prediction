@@ -1,4 +1,4 @@
-# 🏠 Laplace Immo Housing – Machine learnig Project
+# 🏠 Laplace Immo Housing – Machine learning Project
 
 Projet de prédiction du prix des maisons basé sur le dataset Ames Housing, avec une architecture orientée MLOps (Feature Engineering + Training + API).
 
