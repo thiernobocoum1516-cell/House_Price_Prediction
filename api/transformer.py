@@ -39,7 +39,7 @@ def transform_input(data: dict):
         "LotConfig": "Inside",
         "LandSlope": "Gtl",
         "Condition1": "Norm",
-        "Condition2": "Norm",
+        "Condition2": "Noverorm",
         "RoofStyle": "Gable",
         "RoofMatl": "CompShg",
         "Exterior1st": "VinylSd",

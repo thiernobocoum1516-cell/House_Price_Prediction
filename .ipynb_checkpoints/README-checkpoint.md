@@ -24,46 +24,43 @@ avec une erreur moyenne d'environ 20 000 $.
 ---
 
 ## 📁 Architecture du projet
+```
 laplace-immo-housing/
-│
 ├── data/
-│ ├── train.csv
-│ ├── test.csv
-  ├──sample_submission.csv
-│ └── processed/
+│   ├── train.csv
+│   ├── test.csv
+│   ├── sample_submission.csv
+│   └── processed/
 ├── notebooks/
-│ ├── EDA_END_FEATURE-ENGENERING.ipynb
-│ └── Modelisation.ipynb
-│
+│   ├── EDA_END_FEATURE-ENGENERING.ipynb
+│   └── Modelisation.ipynb
+├── script/
+│   ├── build_dataset.py
+│   └── ci_test_prediction.py
 ├── src/
-│ ├── data/
-│ │ └── loader.py
-│ │
-│ ├── features/
-│ │ └── builder.py
-│ │
-│ ├── models/
-│ │ └── train.py
-│ │
-│ └── api/
-│  └──templates/
-│  │  └──index.html
-│ └── main.py
-│ └──predictor.py
-│ └──schema.py
-│  └──transformer.py  
+│   ├── data/
+│   │   └── loader.py
+│   ├── features/
+│   │   └── builder.py
+│   ├── models/
+│   │   └── train.py
+│   ├── api/
+│   │   ├── templates/
+│   │   │   └── index.html
+│   │   └── main.py
+│   ├── predictor.py
+│   ├── schema.py
+│   └── transformer.py
 ├── models/
-│ ├── best_model.pkl
-│ └── features.pkl
-│ └── best_params.pkl
-│
+│   ├── best_model.pkl
+│   ├── features.pkl
+│   └── best_params.pkl
 ├── requirements.txt
-├──tests
-├──setup.py
-└── README.md 
+├── tests/
+├── setup.py
+└── README.md
 
----
-
+```
 ## ⚙️ Processus
 
 ### 1. Data Loading
